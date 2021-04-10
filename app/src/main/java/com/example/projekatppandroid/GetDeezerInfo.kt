@@ -9,24 +9,22 @@ import androidx.appcompat.app.AppCompatActivity
 
 const val GETTING_CODE = "com.example.myfirstapp.MESSAGE"
 var urlSent : String = ""
+val allInfo  = allImportantDeezerInfomation()
+
 
 class GetDeezerInfo : AppCompatActivity()
 {
-
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_get_deezer_info)
 
         // pravimo url koji pozivamo da bi dobili odgovarajući token
-        var appID = "469842"
-        var redirect = "https://theappreciationengine.com/DeezerAuthenticator_Controller"
-        // TODO: možda promena dozvola koje želimo!
-        var perms = "basic_access,email,offline_access,manage_community"
         var urlAuthenticantion = "https://connect.deezer.com/oauth/auth.php?"
-        urlAuthenticantion += "app_id=" + appID
-        urlAuthenticantion += "&redirect_uri=" + redirect
-        urlAuthenticantion += "&perms=" + perms
+        urlAuthenticantion += "app_id=" + allInfo.getterappID()
+        urlAuthenticantion += "&redirect_uri=" + allInfo.getterredirect()
+        urlAuthenticantion += "&perms=" + allInfo.getterperms()
+        urlAuthenticantion += "&request_method=POST"
 
         val twLoading = findViewById<TextView>(R.id.textViewIspis)
         var webView = findViewById<WebView>(R.id.mojWebView)
