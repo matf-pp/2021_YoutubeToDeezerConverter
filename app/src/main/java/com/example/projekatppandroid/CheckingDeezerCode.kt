@@ -94,9 +94,9 @@ class CheckingDeezerCode : AppCompatActivity()
 //                   text = res
 //            }
             val acc_token = Json { isLenient = true }.decodeFromString<AccessToken>(res).getAccess_token()
-            val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
-                   text = acc_token
-            }
+//            val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
+//                   text = acc_token
+//            }
 
             var urlForPlaylists = "https://api.deezer.com/user/me/playlists?"
             urlForPlaylists += "access_token=" + acc_token
@@ -104,29 +104,35 @@ class CheckingDeezerCode : AppCompatActivity()
             //urlForPlaylists += "&request_method=POST"
             urlForPlaylists += "&output=json"
             res = ourGetRequest(urlForPlaylists)
+            var i = 0
             val allPlaylistsInfo : AllPlaylists = Json{ isLenient = true; ignoreUnknownKeys = true}.decodeFromString<AllPlaylists>(res)
             for (currentPlaylistInfo : PlaylistInfo in allPlaylistsInfo.data){
-                res = ourGetRequest(currentPlaylistInfo.tracklist)
+                var playlistSize = currentPlaylistInfo.nb_tracks
+                var urlForPlaylist = currentPlaylistInfo.tracklist + "?limit=" + playlistSize + "&output=json"
+                urlForPlaylist += "&access_token=" + acc_token
+                res = ourGetRequest(urlForPlaylist)
                 var currentPlaylist : Playlist = Json{isLenient = true; ignoreUnknownKeys = true}.decodeFromString<Playlist>(res)
+//                val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
+//                    text = currentPlaylistInfo.title
+//                }
                 var currentPlaylistName = currentPlaylistInfo.title
 
                 var l  : MutableList<String> = mutableListOf()
 
-                while (true){
-                    for (currentSong : Song in currentPlaylist.data){
-                        var currentSongName = currentSong.title
-                        var currentSongArtist = currentSong.artist
-                        var fullSongName = currentSongArtist.name + " - " + currentSongName
-                        l.add(fullSongName)
-                    }
-                    res = ourGetRequest(currentPlaylist.next.toString())
-                    if (!res.contains("next")){
-                        break
-                    }
-                    currentPlaylist = Json { isLenient = true; ignoreUnknownKeys = true;  }.decodeFromString<Playlist>(res)
+                for (currentSong : Song in currentPlaylist.data){
+                    var currentSongName = currentSong.title
+                    var currentSongArtist = currentSong.artist
+                    var fullSongName = currentSongArtist.name + " - " + currentSongName
+                    l.add(fullSongName)
                 }
 
                 mapa[currentPlaylistName] = l
+            }
+
+            // TODO: 2 playliste mogu da imaju isti naziv, mozda bi trebalo da dodamo u ime playliste ko je stvorio ili tako nesto
+
+            val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
+                text = mapa.keys.toString()
             }
 
         }
