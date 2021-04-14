@@ -4,24 +4,31 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/pozadina"
+    android:alpha="0.95"
+    android:background="@android:color/darker_gray"
     android:clickable="true"
-    tools:context=".MainActivity"
-    android:focusable="true">
+    android:focusable="true"
+    android:foreground="@drawable/pozadina"
+    tools:context=".MainActivity">
 
     <TextView
         android:id="@+id/textView"
-        android:layout_width="104dp"
-        android:layout_height="713dp"
-        android:textColor="@color/teal_200"
+        android:layout_width="345dp"
+        android:layout_height="699dp"
+        android:layout_marginTop="16dp"
+        android:fontFamily="casual"
         android:textAlignment="center"
+        android:textAllCaps="false"
+        android:textColor="@android:color/black"
         android:textFontWeight="30"
+        android:textSize="18sp"
+        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0"
+        app:layout_constraintVertical_bias="0.111"
         tools:text="@string/edit_message" />
 
 

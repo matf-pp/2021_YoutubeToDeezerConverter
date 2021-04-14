@@ -10,8 +10,10 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.parse
+import org.json.JSONObject
 import java.io.BufferedInputStream
 import java.io.InputStream
+import java.io.Serializable
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.system.exitProcess
@@ -155,11 +157,7 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
             var btnConverte = findViewById<Button>(R.id.converteBtn)
             btnConverte.setOnClickListener{
                 val intent = Intent(this, Converte::class.java).apply{
-                    var imena:String = ""
-                    for(i in mapCheckedPlayLists.keys.toString()){
-                        imena = imena + " " + i
-                    }
-                    putExtra("pesme", imena)
+                    putExtra("Map", JSONObject(mapCheckedPlayLists as Map<*, *>).toString())
                 }
                 startActivity(intent)
             }
