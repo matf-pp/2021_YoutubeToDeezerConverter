@@ -1,8 +1,10 @@
 package com.example.projekatppandroid
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.TextView
+import android.view.View
+import android.widget.*
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -16,9 +18,12 @@ import kotlin.system.exitProcess
 
 data class response(val success : Int, val resString : String)
 
-class CheckingDeezerCode : AppCompatActivity()
-{
+class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener {
+    var mapCheckedPlayLists : MutableMap<String, MutableList<String>> = mutableMapOf()  //TODO: ne znam da li je ovo najpametnije resenje
+    var mapa : MutableMap<String, MutableList<String>> = mutableMapOf()
 
+    private var listView: ListView? = null
+    private var arrayAdapter: ArrayAdapter<String>? = null
 
     fun ourGetRequest(url : String) : String
     {
@@ -75,12 +80,12 @@ class CheckingDeezerCode : AppCompatActivity()
         //}
 
         val returnval = checkURL(urlGiven.toString())
-        val mapa : MutableMap<String, MutableList<String>> = mutableMapOf()
+        //val mapa : MutableMap<String, MutableList<String>> = mutableMapOf()
         if (returnval.success == -1){
             // TODO: vrati nazad ili tako nesto (ili prekini ceo program)
-            val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
-                text =  returnval.resString
-            }
+//            val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
+//                text =  returnval.resString
+//            }
             //exitProcess(-1)
         } else {
             var urlAccessToken = "https://connect.deezer.com/oauth/access_token.php?"
@@ -131,10 +136,48 @@ class CheckingDeezerCode : AppCompatActivity()
 
             // TODO: 2 playliste mogu da imaju isti naziv, mozda bi trebalo da dodamo u ime playliste ko je stvorio ili tako nesto
 
-            val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
-                text = mapa.keys.toString()
+//            val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
+//                text = mapa.keys.toString()
+//            }
+
+            var names = mapa.keys.toList()
+
+            listView = findViewById(R.id.multiple_list_view)
+            arrayAdapter = ArrayAdapter(applicationContext,
+                android.R.layout.simple_list_item_multiple_choice,
+                names)
+            listView?.adapter = arrayAdapter
+            listView?.choiceMode = ListView.CHOICE_MODE_MULTIPLE
+            listView?.onItemClickListener = this
+
+
+            //Ovo se odnosi na dugme CONVERT
+            var btnConverte = findViewById<Button>(R.id.converteBtn)
+            btnConverte.setOnClickListener{
+                val intent = Intent(this, Converte::class.java).apply{
+                    var imena:String = ""
+                    for(i in mapCheckedPlayLists.keys.toString()){
+                        imena = imena + " " + i
+                    }
+                    putExtra("pesme", imena)
+                }
+                startActivity(intent)
             }
 
         }
     }
+
+    override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        var items:String = parent?.getItemAtPosition(position) as String
+
+        for(pl in mapa.keys){
+            if(pl == items){
+                mapCheckedPlayLists.put(pl, mapa.getValue(pl))
+            }
+        }
+
+        Toast.makeText(applicationContext, "Playlist name : $items", Toast.LENGTH_LONG).show()
+
+    }
+
 }
