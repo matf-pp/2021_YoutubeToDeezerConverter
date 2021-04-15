@@ -26,6 +26,8 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
 
     var allUserPlaylists : MutableList<PlaylistForYoutube> = mutableListOf()
     var sentUserPlaylists : MutableList<PlaylistForYoutube> = mutableListOf()
+    val listFlags: List<Boolean> = listOf()
+
 
     private var listView: ListView? = null
     private var arrayAdapter: ArrayAdapter<String>? = null
@@ -183,7 +185,10 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
         // TODO : sta ako odcekira?
 
         for(pl in allUserPlaylists){
-            if(pl.title == items){
+            if(pl.title == items && sentUserPlaylists.contains(pl)){
+                sentUserPlaylists.remove(pl)
+            }
+            else if (pl.title == items){
                 sentUserPlaylists.add(pl)
             }
         }
