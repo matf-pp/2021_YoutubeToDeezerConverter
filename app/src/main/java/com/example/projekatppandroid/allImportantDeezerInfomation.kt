@@ -12,16 +12,16 @@ data class allImportantDeezerInfomation (
     private val secret : String = "96ac181cddb8bc82fde2c64e44cb5804"
 ) {
     // TODO: sakrij sve ove podatke! (vrv na githubu ima neka opcija)
-    fun getterappID() : String {
+    fun getappID() : String {
         return appID
     }
-    fun getterredirect() : String {
+    fun getredirect() : String {
         return redirect
     }
-    fun getterperms() : String {
+    fun getperms() : String {
         return perms
     }
-    fun gettersecret() : String {
+    fun getsecret() : String {
         return secret
     }
 }

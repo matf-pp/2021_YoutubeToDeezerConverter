@@ -28,7 +28,7 @@ data class PlaylistInfo(
 //    val picture_small: String,
 //    val picture_type: String,
 //    val picture_xl: String,
-//    val `public`: Boolean,
+    val `public`: Boolean,
 //    val time_add: String,
 //    val time_mod: String,
     val title: String,
@@ -57,7 +57,7 @@ data class Playlist(
 data class Song(
 //    val album: Album,
     val artist: Artist,
-//    val duration: String,
+    val duration: String,
 //    val explicit_content_cover: String,
 //    val explicit_content_lyrics: String,
 //    val explicit_lyrics: Boolean,
@@ -73,6 +73,11 @@ data class Song(
     //val title_version: String,
     val type: String
 )
+{
+    fun getSongTitle() : String {
+        return artist.name + " - " + title
+    }
+}
 
 //@Serializable
 //data class Album(

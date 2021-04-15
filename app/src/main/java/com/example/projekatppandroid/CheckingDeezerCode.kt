@@ -5,24 +5,27 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.*
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.parse
-import org.json.JSONObject
+import kotlinx.serialization.stringify
 import java.io.BufferedInputStream
 import java.io.InputStream
 import java.io.Serializable
 import java.net.HttpURLConnection
 import java.net.URL
-import kotlin.system.exitProcess
 
 data class response(val success : Int, val resString : String)
+
+const val GETTING_PLAYLISTS = "code_for_playlists!"
+
 
 class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener {
     var mapCheckedPlayLists : MutableMap<String, MutableList<String>> = mutableMapOf()  //TODO: ne znam da li je ovo najpametnije resenje
     var mapa : MutableMap<String, MutableList<String>> = mutableMapOf()
+
+    var allUserPlaylists : MutableList<PlaylistForYoutube> = mutableListOf()
+    var sentUserPlaylists : MutableList<PlaylistForYoutube> = mutableListOf()
 
     private var listView: ListView? = null
     private var arrayAdapter: ArrayAdapter<String>? = null
@@ -91,8 +94,8 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
             //exitProcess(-1)
         } else {
             var urlAccessToken = "https://connect.deezer.com/oauth/access_token.php?"
-            urlAccessToken += "app_id=" + allInfo.getterappID()
-            urlAccessToken += "&secret=" + allInfo.gettersecret()
+            urlAccessToken += "app_id=" + allInfo.getappID()
+            urlAccessToken += "&secret=" + allInfo.getsecret()
             urlAccessToken += "&code=" + returnval.resString
             urlAccessToken += "&request_method=POST"
             urlAccessToken += "&output=json"
@@ -111,7 +114,6 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
             //urlForPlaylists += "&request_method=POST"
             urlForPlaylists += "&output=json"
             res = ourGetRequest(urlForPlaylists)
-            var i = 0
             val allPlaylistsInfo : AllPlaylists = Json{ isLenient = true; ignoreUnknownKeys = true}.decodeFromString<AllPlaylists>(res)
             for (currentPlaylistInfo : PlaylistInfo in allPlaylistsInfo.data){
                 var playlistSize = currentPlaylistInfo.nb_tracks
@@ -122,18 +124,23 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
 //                val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
 //                    text = currentPlaylistInfo.title
 //                }
-                var currentPlaylistName = currentPlaylistInfo.title
 
-                var l  : MutableList<String> = mutableListOf()
+                var l  : MutableList<Song> = mutableListOf()
 
                 for (currentSong : Song in currentPlaylist.data){
-                    var currentSongName = currentSong.title
-                    var currentSongArtist = currentSong.artist
-                    var fullSongName = currentSongArtist.name + " - " + currentSongName
-                    l.add(fullSongName)
+//                    var currentSongName = currentSong.title
+//                    var currentSongArtist = currentSong.artist
+//                    var fullSongName = currentSongArtist.name + " - " + currentSongName
+                    l.add(currentSong)
                 }
 
-                mapa[currentPlaylistName] = l
+                var playlistNewName = currentPlaylistInfo.title + " made by " + currentPlaylistInfo.creator.name
+                var latestPlaylist : PlaylistForYoutube =
+                    PlaylistForYoutube(playlistNewName, "", l, currentPlaylistInfo.creator, currentPlaylistInfo.public)
+                latestPlaylist.makeRandomDescription()
+                allUserPlaylists.add(latestPlaylist)
+
+                //mapa[currentPlaylistName] = l
             }
 
             // TODO: 2 playliste mogu da imaju isti naziv, mozda bi trebalo da dodamo u ime playliste ko je stvorio ili tako nesto
@@ -142,7 +149,11 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
 //                text = mapa.keys.toString()
 //            }
 
-            var names = mapa.keys.toList()
+            var names : MutableList<String> = mutableListOf()
+
+            for (playlist in allUserPlaylists) {
+                names.add(playlist.title)
+            }
 
             listView = findViewById(R.id.multiple_list_view)
             arrayAdapter = ArrayAdapter(applicationContext,
@@ -154,10 +165,11 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
 
 
             //Ovo se odnosi na dugme CONVERT
-            var btnConverte = findViewById<Button>(R.id.converteBtn)
-            btnConverte.setOnClickListener{
+            var btnConvert = findViewById<Button>(R.id.converteBtn)
+            btnConvert.setOnClickListener{
                 val intent = Intent(this, Converte::class.java).apply{
-                    putExtra("Map", JSONObject(mapCheckedPlayLists as Map<*, *>).toString())
+                    putExtra(GETTING_PLAYLISTS, Json.encodeToString(sentUserPlaylists))
+                    //(GETTING_PLAYLISTS, sentUserPlaylists.toTypedArray())
                 }
                 startActivity(intent)
             }
@@ -168,9 +180,11 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
     override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
         var items:String = parent?.getItemAtPosition(position) as String
 
-        for(pl in mapa.keys){
-            if(pl == items){
-                mapCheckedPlayLists.put(pl, mapa.getValue(pl))
+        // TODO : sta ako odcekira?
+
+        for(pl in allUserPlaylists){
+            if(pl.title == items){
+                sentUserPlaylists.add(pl)
             }
         }
 

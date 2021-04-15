@@ -1,7 +1,9 @@
 package com.example.projekatppandroid
 
+import com.example.projekatppandroid.PlaylistForYoutube
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Parcelable
 import android.widget.TextView
 import com.google.gson.Gson
 import kotlinx.serialization.decodeFromString
@@ -19,18 +21,18 @@ class Converte : AppCompatActivity() {
         actionBar.setDisplayHomeAsUpEnabled(true)
 
         var intent = getIntent()
-        val songs = intent.getStringExtra("Map")
+        val songs = intent.getStringExtra(GETTING_PLAYLISTS)
 
-        var map : MutableMap<String, MutableList<String>> = mutableMapOf()
+        //var map : MutableMap<String, MutableList<String>> = mutableMapOf()
         //map = Gson().fromJson(songs, map.javaClass)
 
-        map = Json { isLenient = true }.decodeFromString(songs.toString())
+        var res = Json { isLenient = true }.decodeFromString<MutableList<PlaylistForYoutube>>(songs.toString())
 
         val textView = findViewById<TextView>(R.id.pesme).apply {
             var tmp = ""
 
-            for (k in map.keys){
-                tmp = tmp + k + " : " + map.getValue(k) + "\n"
+            for (k in res){
+                tmp = tmp + k.title + " : " + k.allSongs + "\n"
             }
 
             text = tmp

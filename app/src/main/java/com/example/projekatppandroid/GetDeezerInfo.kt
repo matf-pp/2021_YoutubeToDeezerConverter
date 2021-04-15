@@ -21,9 +21,9 @@ class GetDeezerInfo : AppCompatActivity()
 
         // pravimo url koji pozivamo da bi dobili odgovarajući token
         var urlAuthenticantion = "https://connect.deezer.com/oauth/auth.php?"
-        urlAuthenticantion += "app_id=" + allInfo.getterappID()
-        urlAuthenticantion += "&redirect_uri=" + allInfo.getterredirect()
-        urlAuthenticantion += "&perms=" + allInfo.getterperms()
+        urlAuthenticantion += "app_id=" + allInfo.getappID()
+        urlAuthenticantion += "&redirect_uri=" + allInfo.getredirect()
+        urlAuthenticantion += "&perms=" + allInfo.getperms()
         urlAuthenticantion += "&request_method=POST"
 
         val twLoading = findViewById<TextView>(R.id.textViewIspis)
