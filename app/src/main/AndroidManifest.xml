@@ -11,7 +11,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ProjekatPPAndroid">
-        <activity android:name=".Converte" android:parentActivityName=".MainActivity">
+        <activity android:name=".Error"></activity>
+        <activity
+            android:name=".Converte"
+            android:parentActivityName=".MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />

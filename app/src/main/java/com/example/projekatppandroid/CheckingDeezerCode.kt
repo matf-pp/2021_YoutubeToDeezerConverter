@@ -21,7 +21,7 @@ const val GETTING_PLAYLISTS = "code_for_playlists!"
 
 
 class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener {
-    var mapCheckedPlayLists : MutableMap<String, MutableList<String>> = mutableMapOf()  //TODO: ne znam da li je ovo najpametnije resenje
+    var mapCheckedPlayLists : MutableMap<String, MutableList<String>> = mutableMapOf()
     var mapa : MutableMap<String, MutableList<String>> = mutableMapOf()
 
     var allUserPlaylists : MutableList<PlaylistForYoutube> = mutableListOf()
@@ -50,6 +50,10 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
             }
             catch (e : Exception){
                 // TODO: neka vesta greške! (something went wrong, please try again)
+                val intent = Intent(this, Error::class.java).apply{
+                    putExtra("Error", e.localizedMessage)
+                }
+                startActivity(intent)
             }
         }
         thread.start()
@@ -94,6 +98,11 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
 //                text =  returnval.resString
 //            }
             //exitProcess(-1)
+            val intent = Intent(this, Error::class.java).apply{
+                putExtra("Error", returnval.resString)
+            }
+            startActivity(intent)
+
         } else {
             var urlAccessToken = "https://connect.deezer.com/oauth/access_token.php?"
             urlAccessToken += "app_id=" + allInfo.getappID()
@@ -117,6 +126,15 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
             urlForPlaylists += "&output=json"
             res = ourGetRequest(urlForPlaylists)
             val allPlaylistsInfo : AllPlaylists = Json{ isLenient = true; ignoreUnknownKeys = true}.decodeFromString<AllPlaylists>(res)
+
+            //TODO: OVO JE ONO STO NEMA SMISLA, JER loved tracks uvek postoje inicijalno
+//            if(allPlaylistsInfo == null){
+//                val intent = Intent(this, Error::class.java).apply{
+//                    putExtra("Error", "Morate imati bar jednu plejlistu!")
+//                }
+//                startActivity(intent)
+//            }
+
             for (currentPlaylistInfo : PlaylistInfo in allPlaylistsInfo.data){
                 var playlistSize = currentPlaylistInfo.nb_tracks
                 var urlForPlaylist = currentPlaylistInfo.tracklist + "?limit=" + playlistSize + "&output=json"
@@ -181,8 +199,6 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
 
     override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
         var items:String = parent?.getItemAtPosition(position) as String
-
-        // TODO : sta ako odcekira?
 
         for(pl in allUserPlaylists){
             if(pl.title == items && sentUserPlaylists.contains(pl)){
