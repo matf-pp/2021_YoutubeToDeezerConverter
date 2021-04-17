@@ -14,6 +14,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
     }
 
+
     fun getDeezerInfo(view : View) {
         val intent = Intent(this, GetDeezerInfo::class.java).apply {
         }
