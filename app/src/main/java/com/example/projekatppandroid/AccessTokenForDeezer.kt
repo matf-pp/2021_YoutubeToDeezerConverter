@@ -3,7 +3,7 @@ package com.example.projekatppandroid
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AccessToken
+data class AccessTokenForDeezer
 (
     private val access_token: String,
     private val expires: String

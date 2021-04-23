@@ -8,10 +8,8 @@ import android.widget.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.stringify
 import java.io.BufferedInputStream
 import java.io.InputStream
-import java.io.Serializable
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -114,20 +112,21 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
 //            val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
 //                   text = res
 //            }
-            val acc_token = Json { isLenient = true }.decodeFromString<AccessToken>(res).getAccess_token()
+            val acc_token = Json { isLenient = true }.decodeFromString<AccessTokenForDeezer>(res).getAccess_token()
 //            val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
 //                   text = acc_token
 //            }
 
             var urlForPlaylists = "https://api.deezer.com/user/me/playlists?"
             urlForPlaylists += "access_token=" + acc_token
+            // TODO : moze wrong input mora to se popravi
             // ako je ubacen post metod on misli da dodajemo pesme, zato ne radi
             //urlForPlaylists += "&request_method=POST"
             urlForPlaylists += "&output=json"
             res = ourGetRequest(urlForPlaylists)
             val allPlaylistsInfo : AllPlaylists = Json{ isLenient = true; ignoreUnknownKeys = true}.decodeFromString<AllPlaylists>(res)
 
-            //TODO: OVO JE ONO STO NEMA SMISLA, JER loved tracks uvek postoje inicijalno
+            //TODO: šta ako ne izabere nijednu plajlistu? to se mora obraditi
 //            if(allPlaylistsInfo == null){
 //                val intent = Intent(this, Error::class.java).apply{
 //                    putExtra("Error", "Morate imati bar jednu plejlistu!")
