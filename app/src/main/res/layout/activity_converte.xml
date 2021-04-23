@@ -19,7 +19,7 @@
         android:layout_width="330dp"
         android:layout_height="438dp"
         android:text="TextView"
-        android:textSize="18sp"
+        android:textSize="10sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.493"

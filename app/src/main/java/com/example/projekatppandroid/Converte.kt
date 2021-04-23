@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import com.github.kittinunf.fuel.httpPost
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -60,6 +61,7 @@ class Converte : AppCompatActivity() {
 
         val clientID = getString(R.string.clientID)
         val secret = getString(R.string.secret)
+        val urlForAccessToken = "https://oauth2.googleapis.com/token"
 
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestServerAuthCode(clientID)
@@ -74,7 +76,9 @@ class Converte : AppCompatActivity() {
         signInButton.setSize(SignInButton.SIZE_STANDARD)
 
         val account = GoogleSignIn.getLastSignedInAccount(this)
-        updateUI(account)
+        if (account != null){
+            signOut(mGoogleSignInClient)
+        }
 
         signInButton.setOnClickListener{
             signIn(mGoogleSignInClient)
@@ -84,6 +88,17 @@ class Converte : AppCompatActivity() {
         signOutButton.setOnClickListener {
             signOut(mGoogleSignInClient)
         }
+
+        val StartConvertionButton = findViewById<Button>(R.id.StartConvertion)
+        StartConvertionButton.setOnClickListener{
+            val account = GoogleSignIn.getLastSignedInAccount(this)
+            if (account != null) {
+                ourPostMethod(account, clientID, secret, urlForAccessToken)
+
+            }
+        }
+
+
 
     }
 
@@ -146,6 +161,29 @@ class Converte : AppCompatActivity() {
             //Log.w(FragmentActivity.TAG, "signInResult:failed code=" + e.statusCode)
             updateUI(null)
         }
+    }
+
+    private fun ourPostMethod(user: GoogleSignInAccount, clientID : String, secret : String, url : String) : String {
+        var res : String = ""
+        val thread = Thread {
+            val grant : String = "authorization_code"
+            val (x, y, result) = url
+                    .httpPost(listOf("client_id" to clientID,
+                            "code" to user.serverAuthCode,
+                            "client_secret" to secret,
+                            "redirect_uri" to "",
+                            "grant_type" to grant))
+                    .responseString()
+            findViewById<TextView>(R.id.pesme).apply {
+                //ourPostMethod(user)
+                //val s1  = BASE64URL-ENCODE(SHA256(ASCII(code_verifier)))
+                text = result.toString()
+            }
+            res = result.toString()
+        }
+        thread.start()
+        thread.join()
+        return res
     }
 }
 

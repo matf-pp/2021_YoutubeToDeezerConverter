@@ -34,17 +34,3 @@ class MainActivity : AppCompatActivity() {
 }
 
 
-
-//var appID = "469842"
-//var redirect = "https://theappreciationengine.com/DeezerAuthenticator_Controller"
-//var perms = "basic_access,email"
-//var url = "https://connect.deezer.com/oauth/auth.php?"
-//url += "app_id=" + appID.toString()
-//url += "&redirect_uri=" + redirect
-//url += "&perms=" + perms
-
-//val url1 = "https://connect.deezer.com/oauth/auth.php?app_id=469842&redirect_uri=https://theappreciationengine.com/DeezerAuthenticator_Controller&perms=basic_access,email"
-//val text = URL(url1).readText()
-////println(text)
-
-//val url1 = "https://connect.deezer.com/oauth/auth.php?app_id=469842&redirect_uri=https://theappreciationengine.com/DeezerAuthenticator_Controller&perms=basic_access,email"
