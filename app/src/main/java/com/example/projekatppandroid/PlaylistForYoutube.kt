@@ -6,15 +6,15 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PlaylistForYoutube
-(
+    (
     var title : String,
     var description : String,
     var allSongs : MutableList<Song>,
     var creator : Creator,
-    var status : Boolean
+    var status : Boolean // true ako public
 )
 {
-    fun makeRandomDescription() {
-        description = "The playlist " + title + "was made by the user " + creator.name
+    fun makeRandomDescription() : String {
+        return "The playlist " + title + " is a great playlist!"
     }
 }

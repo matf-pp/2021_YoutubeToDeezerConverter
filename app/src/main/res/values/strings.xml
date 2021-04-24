@@ -4,5 +4,8 @@
     <string name="loadingTokenString">Please wait for the Deezer login popup.</string>
     <string name="DisplayURL">\"no url given\"</string>
     <string name="LogOut">Log Out</string>
+    <string name="ourID">AIzaSyDPcLIVTFroJmRAAfjmnH-6_rMeUOzVI-c</string>
+    <string name="clientID">218071644434-7l6tpkqi2qd2p58q4icr8n5gi3namuhv.apps.googleusercontent.com</string>
+    <string name="secret">IBzLUzoTXIh3oVOQlWouBcDM</string>
     <string name="convert">Convert</string>
 </resources>
