@@ -26,9 +26,10 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.stringify
 import org.w3c.dom.Text
-import java.io.BufferedReader
-import java.io.File
-import java.io.FileNotFoundException
+import java.io.*
+import java.net.HttpURLConnection
+import java.net.MalformedURLException
+import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
@@ -156,13 +157,41 @@ class Converte : AppCompatActivity() {
                     val youtubePlaylistInfoJson = Json{ isLenient = true; ignoreUnknownKeys = true }.decodeFromString<YoutubePlaylistCreationInfo>(youtubePlaylistInfoString)
                     val playlistID = youtubePlaylistInfoJson.id
                     //Log.d("blabla", youtubePlaylistInfoJson.id)
-                    
+
+                    for (song in playlist.allSongs){
+                        val songTitle = song.artist.name + " - " + song.title
+                        var songID = getSongID(songTitle)
+                    }
                 }
             }
         }
 
 
 
+    }
+
+    private fun getSongID(songTitle : String){
+        // nesto nije dobro sa ovime, daje neki skroz desni html, probaj prvo sa
+        // samo ovim unapred zadatim urlom, i ako radi sa njim probaj dalje
+        Log.d("Song title", songTitle)
+        var urltoSong = "https://www.youtube.com/results?search_query=" + songTitle
+        urltoSong = urltoSong.replace(" ", "+")
+        urltoSong = "https://www.youtube.com/results?search_query=Lana+Del+Rey+-+Art+Deco"
+        Log.d("Song url", urltoSong)
+        var response = ""
+        val thread = Thread {
+            try {
+                val content = URL(urltoSong).readText()
+                Log.d("UrlTest", content)
+            }
+            catch (e : MalformedURLException){
+                Log.d("error", "errooorororor")
+            }
+        }
+        thread.start()
+        thread.join()
+        //Log.d("SongInfo", response)
+        Log.d("--", "---------------------------------------------------------------------")
     }
 
     private fun signIn(mGoogleSignInClient: GoogleSignInClient) {
