@@ -4,12 +4,6 @@ import kotlinx.serialization.Serializable
 
 
 @Serializable
-data class Success
-(
-    var Success : AccessTokenYoutube
-){}
-
-@Serializable
 data class AccessTokenYoutube
 (
     var access_token : String,

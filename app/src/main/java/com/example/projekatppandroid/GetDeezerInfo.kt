@@ -52,6 +52,7 @@ class GetDeezerInfo : AppCompatActivity()
                     //    text = ""
                     //}
                     getDeezerInfo()
+                    //return false
                 }
                 return true
             }

@@ -31,17 +31,9 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.system.exitProcess
 
 class Converte : AppCompatActivity() {
-
-    @Serializable
-    data class YoutubePlaylistCreation(val snippet : Snippet, val status : Status)
-
-    @Serializable
-    data class Snippet(val title : String, val description : String)
-
-    @Serializable
-    data class Status(val privacyStatus : String)
 
     companion object {
         const val TAG = "GoogleActivity"
@@ -65,15 +57,7 @@ class Converte : AppCompatActivity() {
 
         var allPlaylists = Json { isLenient = true }.decodeFromString<MutableList<PlaylistForYoutube>>(songs.toString())
 
-//        val textView = findViewById<TextView>(R.id.pesme).apply {
-//            var tmp = ""
-//
-//            for (k in res){
-//                tmp = tmp + k.title + " : " + k.allSongs + "\n"
-//            }
-//
-//            text = tmp
-//        }
+        val textView = findViewById<TextView>(R.id.pesme)
 
         val clientID = getString(R.string.clientID)
         val secret = getString(R.string.secret)
@@ -110,6 +94,11 @@ class Converte : AppCompatActivity() {
 
         val StartConvertionButton = findViewById<Button>(R.id.StartConvertion)
         StartConvertionButton.setOnClickListener{
+            textView.apply {
+                text = "Please wait while make your playlists (This might take a while!)"
+            }
+            signOutButton.alpha = 0.0f
+            StartConvertionButton.alpha = 0.0f
             val user = GoogleSignIn.getLastSignedInAccount(this)
             val grant = "authorization_code"
             if (user != null) {
@@ -120,19 +109,28 @@ class Converte : AppCompatActivity() {
                         "grant_type" to grant))
 
                 var accessTokenStringFormat = ourPostMethodList(l, urlForAccessToken)
-                accessTokenStringFormat = accessTokenStringFormat.replace("[", "{")
-                accessTokenStringFormat = accessTokenStringFormat.replace("]", "}")
+                if (!accessTokenStringFormat.contains("Success") || accessTokenStringFormat.contains("Error")){
+                    // TODO loš je odgovor, mora da se obrati greska nekako
+                    exitProcess(1)
+                }
+
+                accessTokenStringFormat = accessTokenStringFormat.drop(accessTokenStringFormat.indexOf("{"))
+                accessTokenStringFormat = accessTokenStringFormat.dropLast(accessTokenStringFormat.length - accessTokenStringFormat.lastIndexOf("]"))
+
+                //Log.d("bla", accessTokenStringFormat)
+
 
                 // TODO: tipa if accessTokenStringFormat.contanintsss("error") onda error screen
                 // TODO: isto tako za ono wrong sranje kod deezer (to je ono kad se vraćaš pa error)
-                val accessTokenJsonFormat = Json{ isLenient = true; ignoreUnknownKeys = true }.decodeFromString<Success>(accessTokenStringFormat)
+                val accessTokenJsonFormat = Json{ isLenient = true; ignoreUnknownKeys = true }.decodeFromString<AccessTokenYoutube>(accessTokenStringFormat)
 
-                var accessToken = accessTokenJsonFormat.Success.access_token
+                var accessToken = accessTokenJsonFormat.access_token
+                //Log.d("ACCESSTOKEN!", accessToken)
                 var urlForInsertPlaylists = "https://www.googleapis.com/youtube/v3/playlists?part=snippet,status"
                 urlForInsertPlaylists += "&key=" + ourID
                 urlForInsertPlaylists += "&access_token=" + accessToken
 
-                //Log.d("My app",accessToken + "\n---------------------------------------------------\n" + user.idToken)
+               // Log.d("My app",accessToken + "\n---------------------------------------------------\n" + user.idToken)
 //                findViewById<TextView>(R.id.pesme).apply {
 //                    text = accessToken + "\n---------------------------------------------------\n" + user.idToken
 //                }
@@ -143,22 +141,22 @@ class Converte : AppCompatActivity() {
                     val title = playlist.title
                     val description : String = playlist.makeRandomDescription()
                     val status : String = if (playlist.status) "public" else "private"
-                    val playlistInfo = YoutubePlaylistCreation(Snippet(title, description), Status(status))
-                    try {
-                        var l = Json.encodeToString(YoutubePlaylistCreation.serializer(), playlistInfo)
-                        var list = listOf("snippet" to listOf("title" to title, "description" to description),
-                                "status" to listOf("privacyStatus" to status))
-                        val bodyJson = """ { "snippet" : { "title" : "$title", "description" : "$description"}, "status" : { "privacyStatus" : "$status"}}"""
-                        //Log.d("LISTAAAA", list.toString())
-                        var response = ourPostMethodBody(bodyJson, urlForInsertPlaylists)
-                        Log.d("Our Program", response)
+                    val bodyJson = """ { "snippet" : { "title" : "$title", "description" : "$description"}, "status" : { "privacyStatus" : "$status"}}"""
+                    var youtubePlaylistInfoString = ourPostMethodBody(bodyJson, urlForInsertPlaylists)
+                    if (!youtubePlaylistInfoString.contains("Success") || youtubePlaylistInfoString.contains("Error")){
+                        // TODO: error neki
+                        //  moze se napravi neka funkcija tipa error specificno za ovaj poyiv,
+                        //    i ako se procita kao error 403, napise se korisniku e nemamo quote i tako te stvari
+                        Log.d("ERROR", youtubePlaylistInfoString)
+                        exitProcess(1)
                     }
-                    catch (e : SerializationException){
-                        // TODO: i ovo treba lepse nekako
-                        Log.d("Our program", "Something went wrong while serializing, please try again")
-                    }
-                    //var response = ourPostMethodJsonString(l, urlForInsertPlaylists)
+                    youtubePlaylistInfoString = youtubePlaylistInfoString.drop(youtubePlaylistInfoString.indexOf("{"))
+                    youtubePlaylistInfoString = youtubePlaylistInfoString.dropLast(youtubePlaylistInfoString.length - youtubePlaylistInfoString.lastIndexOf("]"))
 
+                    val youtubePlaylistInfoJson = Json{ isLenient = true; ignoreUnknownKeys = true }.decodeFromString<YoutubePlaylistCreationInfo>(youtubePlaylistInfoString)
+                    val playlistID = youtubePlaylistInfoJson.id
+                    //Log.d("blabla", youtubePlaylistInfoJson.id)
+                    
                 }
             }
         }
@@ -234,13 +232,14 @@ class Converte : AppCompatActivity() {
         val thread = Thread {
             val (x, y, result) = Fuel.post(url)
                     .body(s)
-                    .response()
+                    .responseString()
 //            findViewById<TextView>(R.id.pesme).apply {
 //                text = result.toString()
 //            }
-            res += s
-            res += x.toString()
-            res += y.toString()
+            res = result.toString()
+//            res += "\n\n\n\n"
+//            res += x.toString()
+//            res += "\n\n\n" + y.toString()
         }
         thread.start()
         thread.join()
@@ -257,7 +256,6 @@ class Converte : AppCompatActivity() {
 //                text = result.toString()
 //            }
             res = result.toString()
-            Log.d("My tast", x.toString() + "\n\n\n" + y.toString())
         }
         thread.start()
         thread.join()
