@@ -8,8 +8,8 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import com.android.volley.toolbox.HttpResponse
 import com.github.kittinunf.fuel.Fuel
-import com.github.kittinunf.fuel.gson.jsonBody
 import com.github.kittinunf.fuel.httpPost
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -19,20 +19,14 @@ import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import com.google.android.gms.tasks.Task
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.stringify
-import org.w3c.dom.Text
-import java.io.*
+import java.lang.Integer.min
 import java.net.HttpURLConnection
 import java.net.MalformedURLException
 import java.net.URL
-import java.nio.file.Files
-import java.nio.file.Paths
 import kotlin.system.exitProcess
+
 
 class Converte : AppCompatActivity() {
 
@@ -41,6 +35,9 @@ class Converte : AppCompatActivity() {
         const val RC_SIGN_IN = 9001
     }
 
+    val regex = Regex("\"videoId\":\"([^\"]+)\"")
+
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_converte)
@@ -143,55 +140,80 @@ class Converte : AppCompatActivity() {
                     val description : String = playlist.makeRandomDescription()
                     val status : String = if (playlist.status) "public" else "private"
                     val bodyJson = """ { "snippet" : { "title" : "$title", "description" : "$description"}, "status" : { "privacyStatus" : "$status"}}"""
-                    var youtubePlaylistInfoString = ourPostMethodBody(bodyJson, urlForInsertPlaylists)
-                    if (!youtubePlaylistInfoString.contains("Success") || youtubePlaylistInfoString.contains("Error")){
-                        // TODO: error neki
-                        //  moze se napravi neka funkcija tipa error specificno za ovaj poyiv,
-                        //    i ako se procita kao error 403, napise se korisniku e nemamo quote i tako te stvari
-                        Log.d("ERROR", youtubePlaylistInfoString)
-                        exitProcess(1)
-                    }
-                    youtubePlaylistInfoString = youtubePlaylistInfoString.drop(youtubePlaylistInfoString.indexOf("{"))
-                    youtubePlaylistInfoString = youtubePlaylistInfoString.dropLast(youtubePlaylistInfoString.length - youtubePlaylistInfoString.lastIndexOf("]"))
-
-                    val youtubePlaylistInfoJson = Json{ isLenient = true; ignoreUnknownKeys = true }.decodeFromString<YoutubePlaylistCreationInfo>(youtubePlaylistInfoString)
-                    val playlistID = youtubePlaylistInfoJson.id
+//                    var youtubePlaylistInfoString = ourPostMethodBody(bodyJson, urlForInsertPlaylists)
+//                    if (!youtubePlaylistInfoString.contains("Success") || youtubePlaylistInfoString.contains("Error")){
+//                        // TODO: error neki
+//                        //  moze se napravi neka funkcija tipa error specificno za ovaj poyiv,
+//                        //    i ako se procita kao error 403, napise se korisniku e nemamo quote i tako te stvari
+//                        Log.d("ERROR", youtubePlaylistInfoString)
+//                        exitProcess(1)
+//                    }
+//                    youtubePlaylistInfoString = youtubePlaylistInfoString.drop(youtubePlaylistInfoString.indexOf("{"))
+//                    youtubePlaylistInfoString = youtubePlaylistInfoString.dropLast(youtubePlaylistInfoString.length - youtubePlaylistInfoString.lastIndexOf("]"))
+//
+//                    val youtubePlaylistInfoJson = Json{ isLenient = true; ignoreUnknownKeys = true }.decodeFromString<YoutubePlaylistCreationInfo>(youtubePlaylistInfoString)
+//                    val playlistID = youtubePlaylistInfoJson.id
                     //Log.d("blabla", youtubePlaylistInfoJson.id)
-
-                    for (song in playlist.allSongs){
-                        val songTitle = song.artist.name + " - " + song.title
-                        var songID = getSongID(songTitle)
+                    val n = playlist.allSongs.size
+                    val groupSize = 3
+                    // TODO : konkruentnost za array
+                    val songIds = Array<String>(n, init = { "" })
+                    // Thread pool mozda?
+                    var i = 0
+                    while (i < n){
+                        val threadCount = min(groupSize, n - i)
+                        Log.d("Spawning batch", threadCount.toString())
+                        val threads = Array<Thread>(threadCount, init = {
+                            Thread(Runnable {
+                                val song = playlist.allSongs[i + it]
+                                val songTitle = song.artist.name + " - " + song.title
+                                songIds[i + it] = getSongID(songTitle)
+                            })
+                        } )
+                        threads.forEach {it.start()}
+                        threads.forEach {it.join()}
+                        i += threadCount
                     }
+
+                    Log.d("SongIds", songIds.contentToString())
+
                 }
             }
         }
-
-
-
     }
 
-    private fun getSongID(songTitle : String){
-        // nesto nije dobro sa ovime, daje neki skroz desni html, probaj prvo sa
-        // samo ovim unapred zadatim urlom, i ako radi sa njim probaj dalje
-        Log.d("Song title", songTitle)
-        var urltoSong = "https://www.youtube.com/results?search_query=" + songTitle
-        urltoSong = urltoSong.replace(" ", "+")
-        urltoSong = "https://www.youtube.com/results?search_query=Lana+Del+Rey+-+Art+Deco"
-        Log.d("Song url", urltoSong)
-        var response = ""
-        val thread = Thread {
-            try {
-                val content = URL(urltoSong).readText()
-                Log.d("UrlTest", content)
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun getSongID(songTitle: String) : String {
+        //Log.d("Song title", songTitle)
+        var encoded = java.net.URLEncoder.encode(songTitle, "utf-8")
+        var urlStr = "https://www.youtube.com/results?search_query=" + encoded
+        //urltoSong = "https://www.youtube.com/results?search_query=Lana+Del+Rey+-+Art+Deco"
+        //Log.d("encoded", encoded)
+        //Log.d("Song url", urlStr)
+        var videoId : String = ""
+
+        try{
+            val url = URL(urlStr)
+            val connection : HttpURLConnection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.setRequestProperty("User-Agent", "curl/7.64.1")
+            connection.inputStream.bufferedReader().use {
+                for (line in it.lines()){
+                    val match = regex.find(line)
+                    if (match != null){
+                        videoId = match.groupValues[1]
+                        break
+                    }
+                }
             }
-            catch (e : MalformedURLException){
-                Log.d("error", "errooorororor")
-            }
+            Log.d("videoID", videoId)
         }
-        thread.start()
-        thread.join()
-        //Log.d("SongInfo", response)
-        Log.d("--", "---------------------------------------------------------------------")
+        catch(e : MalformedURLException){
+            // TODO: srediti
+            Log.d("Error", e.stackTrace.toString())
+        }
+
+        return videoId
     }
 
     private fun signIn(mGoogleSignInClient: GoogleSignInClient) {
@@ -275,7 +297,7 @@ class Converte : AppCompatActivity() {
         return res
     }
 
-    private fun ourPostMethodList(l: List<Pair<String, String?>>, url : String) : String {
+    private fun ourPostMethodList(l: List<Pair<String, String?>>, url: String) : String {
         var res : String = ""
         val thread = Thread {
             val (x, y, result) = url
