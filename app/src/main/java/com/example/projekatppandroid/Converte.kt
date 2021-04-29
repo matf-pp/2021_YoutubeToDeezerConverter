@@ -127,8 +127,7 @@ class Converte : AppCompatActivity() {
                 var urlForInsertPlaylists = "https://www.googleapis.com/youtube/v3/playlists?part=snippet,status"
                 urlForInsertPlaylists += "&key=" + ourID
                 urlForInsertPlaylists += "&access_token=" + accessToken
-
-               // Log.d("My app",accessToken + "\n---------------------------------------------------\n" + user.idToken)
+                //Log.d("My app",accessToken + "\n---------------------------------------------------\n" + user.idToken)
 //                findViewById<TextView>(R.id.pesme).apply {
 //                    text = accessToken + "\n---------------------------------------------------\n" + user.idToken
 //                }
@@ -140,20 +139,20 @@ class Converte : AppCompatActivity() {
                     val description : String = playlist.makeRandomDescription()
                     val status : String = if (playlist.status) "public" else "private"
                     val bodyJson = """ { "snippet" : { "title" : "$title", "description" : "$description"}, "status" : { "privacyStatus" : "$status"}}"""
-//                    var youtubePlaylistInfoString = ourPostMethodBody(bodyJson, urlForInsertPlaylists)
-//                    if (!youtubePlaylistInfoString.contains("Success") || youtubePlaylistInfoString.contains("Error")){
-//                        // TODO: error neki
-//                        //  moze se napravi neka funkcija tipa error specificno za ovaj poyiv,
-//                        //    i ako se procita kao error 403, napise se korisniku e nemamo quote i tako te stvari
-//                        Log.d("ERROR", youtubePlaylistInfoString)
-//                        exitProcess(1)
-//                    }
-//                    youtubePlaylistInfoString = youtubePlaylistInfoString.drop(youtubePlaylistInfoString.indexOf("{"))
-//                    youtubePlaylistInfoString = youtubePlaylistInfoString.dropLast(youtubePlaylistInfoString.length - youtubePlaylistInfoString.lastIndexOf("]"))
-//
-//                    val youtubePlaylistInfoJson = Json{ isLenient = true; ignoreUnknownKeys = true }.decodeFromString<YoutubePlaylistCreationInfo>(youtubePlaylistInfoString)
-//                    val playlistID = youtubePlaylistInfoJson.id
-                    //Log.d("blabla", youtubePlaylistInfoJson.id)
+                    var youtubePlaylistInfoString = ourPostMethodBody(bodyJson, urlForInsertPlaylists)
+                    if (!youtubePlaylistInfoString.contains("Success") || youtubePlaylistInfoString.contains("Error")){
+                        // TODO: error neki
+                        //  moze se napravi neka funkcija tipa error specificno za ovaj poyiv,
+                        //    i ako se procita kao error 403, napise se korisniku e nemamo quote i tako te stvari
+                        Log.d("ERROR", youtubePlaylistInfoString)
+                        exitProcess(1)
+                    }
+                    youtubePlaylistInfoString = youtubePlaylistInfoString.drop(youtubePlaylistInfoString.indexOf("{"))
+                    youtubePlaylistInfoString = youtubePlaylistInfoString.dropLast(youtubePlaylistInfoString.length - youtubePlaylistInfoString.lastIndexOf("]"))
+
+                    val youtubePlaylistInfoJson = Json{ isLenient = true; ignoreUnknownKeys = true }.decodeFromString<YoutubePlaylistCreationInfo>(youtubePlaylistInfoString)
+                    val playlistID = youtubePlaylistInfoJson.id
+                    Log.d("playlistid", playlistID)
                     val n = playlist.allSongs.size
                     val groupSize = 3
                     // TODO : konkruentnost za array
@@ -162,7 +161,6 @@ class Converte : AppCompatActivity() {
                     var i = 0
                     while (i < n){
                         val threadCount = min(groupSize, n - i)
-                        Log.d("Spawning batch", threadCount.toString())
                         val threads = Array<Thread>(threadCount, init = {
                             Thread(Runnable {
                                 val song = playlist.allSongs[i + it]
@@ -175,8 +173,22 @@ class Converte : AppCompatActivity() {
                         i += threadCount
                     }
 
-                    Log.d("SongIds", songIds.contentToString())
+                    //Log.d("SongIds", songIds.contentToString())
 
+                    var urlForSongInsertion = "https://www.googleapis.com/youtube/v3/playlistItems?"
+                    urlForSongInsertion += "part=snippet"
+                    urlForSongInsertion += "&key=" + ourID
+                    urlForSongInsertion += "&access_token=" + accessToken
+
+                    for (songid in songIds){
+                        if (songid == "")
+                            continue
+                        val body =  """ { "snippet" : { "playlistId" : "$playlistID", "resourceId" : { "kind" : "youtube#video", "videoId" : "$songid"}}}"""
+                        val res = ourPostMethodBody(body, urlForSongInsertion)
+                        if (!res.contains("Success") || res.contains("Error")){
+                            Log.d("Error", res)
+                        }
+                    }
                 }
             }
         }
@@ -206,7 +218,7 @@ class Converte : AppCompatActivity() {
                     }
                 }
             }
-            Log.d("videoID", videoId)
+            //Log.d("videoID", videoId)
         }
         catch(e : MalformedURLException){
             // TODO: srediti
@@ -278,19 +290,13 @@ class Converte : AppCompatActivity() {
     }
 
     private fun ourPostMethodBody(s: String, url: String): String {
-        // s je JSONString od klase neke
+        // s je body
         var res = ""
         val thread = Thread {
             val (x, y, result) = Fuel.post(url)
                     .body(s)
                     .responseString()
-//            findViewById<TextView>(R.id.pesme).apply {
-//                text = result.toString()
-//            }
             res = result.toString()
-//            res += "\n\n\n\n"
-//            res += x.toString()
-//            res += "\n\n\n" + y.toString()
         }
         thread.start()
         thread.join()
@@ -303,9 +309,6 @@ class Converte : AppCompatActivity() {
             val (x, y, result) = url
                     .httpPost(l)
                     .responseString()
-//            findViewById<TextView>(R.id.pesme).apply {
-//                text = result.toString()
-//            }
             res = result.toString()
         }
         thread.start()
