@@ -80,6 +80,7 @@ class Converte : AppCompatActivity() {
         if (account != null){
             signOut(mGoogleSignInClient)
         }
+        updateUI(null)
 
         signInButton.setOnClickListener{
             signIn(mGoogleSignInClient)
@@ -92,11 +93,7 @@ class Converte : AppCompatActivity() {
 
         val StartConvertionButton = findViewById<Button>(R.id.StartConvertion)
         StartConvertionButton.setOnClickListener{
-            textView.apply {
-                text = "Please wait while make your playlists (This might take a while!)"
-            }
-            signOutButton.alpha = 0.0f
-            StartConvertionButton.alpha = 0.0f
+            updateUIForConvertion()
             val user = GoogleSignIn.getLastSignedInAccount(this)
             val grant = "authorization_code"
             if (user != null) {
@@ -107,8 +104,9 @@ class Converte : AppCompatActivity() {
                         "grant_type" to grant))
 
                 var accessTokenStringFormat = ourPostMethodList(l, urlForAccessToken)
-                if (!accessTokenStringFormat.contains("Success") || accessTokenStringFormat.contains("Error")){
+                if (!accessTokenStringFormat.contains("Success") || accessTokenStringFormat.contains("Failure") || accessTokenStringFormat.contains("Error")){
                     // TODO loš je odgovor, mora da se obrati greska nekako
+                    Log.d("EXIT", "access_token")
                     exitProcess(1)
                 }
 
@@ -140,10 +138,10 @@ class Converte : AppCompatActivity() {
                     val status : String = if (playlist.status) "public" else "private"
                     val bodyJson = """ { "snippet" : { "title" : "$title", "description" : "$description"}, "status" : { "privacyStatus" : "$status"}}"""
                     var youtubePlaylistInfoString = ourPostMethodBody(bodyJson, urlForInsertPlaylists)
-                    if (!youtubePlaylistInfoString.contains("Success") || youtubePlaylistInfoString.contains("Error")){
+                    if (!youtubePlaylistInfoString.contains("Success") || youtubePlaylistInfoString.contains("Failure") || youtubePlaylistInfoString.contains("Error")){
                         // TODO: error neki
                         //  moze se napravi neka funkcija tipa error specificno za ovaj poyiv,
-                        //    i ako se procita kao error 403, napise se korisniku e nemamo quote i tako te stvari
+                        //  i ako se procita kao error 403, napise se korisniku e nemamo quote i tako te stvari
                         Log.d("ERROR", youtubePlaylistInfoString)
                         exitProcess(1)
                     }
@@ -185,13 +183,27 @@ class Converte : AppCompatActivity() {
                             continue
                         val body =  """ { "snippet" : { "playlistId" : "$playlistID", "resourceId" : { "kind" : "youtube#video", "videoId" : "$songid"}}}"""
                         val res = ourPostMethodBody(body, urlForSongInsertion)
-                        if (!res.contains("Success") || res.contains("Error")){
+                        if (!res.contains("Success") || res.contains("Failure") || res.contains("Error")){
                             Log.d("Error", res)
+                            // TODO : nesto nije htela pesma se ubaci
                         }
                     }
                 }
             }
         }
+    }
+
+    private fun updateUIForConvertion() {
+        val textView = findViewById<TextView>(R.id.pesme)
+        val signInButton = findViewById<SignInButton>(R.id.sign_in_button)
+        val signOutButton = findViewById<Button>(R.id.LogOut)
+        val StartConvertionButton = findViewById<Button>(R.id.StartConvertion)
+        textView.apply {
+            text = "Please wait while we make your playlists (This might take a while!)"
+        }
+        signOutButton.alpha = 0.0f
+        StartConvertionButton.alpha = 0.0f
+        signInButton.alpha = 0.0f
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -235,6 +247,7 @@ class Converte : AppCompatActivity() {
     }
 
     private fun signOut(mGoogleSignInClient: GoogleSignInClient) {
+        updateUI(null)
         mGoogleSignInClient.signOut().addOnCompleteListener(this) {
             updateUI(null)
         }

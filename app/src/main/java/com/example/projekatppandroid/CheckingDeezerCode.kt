@@ -124,6 +124,9 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
             //urlForPlaylists += "&request_method=POST"
             urlForPlaylists += "&output=json"
             res = ourGetRequest(urlForPlaylists)
+            if (res.contains("wrong input")){
+                // TODO: salje na stranicu onu
+            }
             val allPlaylistsInfo : AllPlaylists = Json{ isLenient = true; ignoreUnknownKeys = true}.decodeFromString<AllPlaylists>(res)
 
             //TODO: šta ako ne izabere nijednu plajlistu? to se mora obraditi
@@ -161,8 +164,6 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
 
                 //mapa[currentPlaylistName] = l
             }
-
-            // TODO: 2 playliste mogu da imaju isti naziv, mozda bi trebalo da dodamo u ime playliste ko je stvorio ili tako nesto
 
 //            val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
 //                text = mapa.keys.toString()
