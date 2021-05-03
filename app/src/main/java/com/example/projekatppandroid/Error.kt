@@ -9,6 +9,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.*
+import kotlin.concurrent.schedule
 
 @Suppress("DEPRECATION")
 class Error : AppCompatActivity() {
@@ -19,7 +20,7 @@ class Error : AppCompatActivity() {
 
         var actionBar = supportActionBar
 
-        actionBar!!.title = "ProjekatPPAndroid"
+        actionBar!!.title = ""
         actionBar.setDisplayHomeAsUpEnabled(true)
 
         var intent = getIntent()
@@ -29,24 +30,19 @@ class Error : AppCompatActivity() {
             text = error
         }
 
-        //TODO: moze da pravi problemm, proveriti!
-        activity()
 
-    }
-
-    private fun activity() {
-
-        var mRunnable = Runnable {
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
+        Timer("SettingUp", false).schedule(2000){
+            action()
         }
 
-        var mHandler = Handler()
-
-        mHandler.postDelayed(mRunnable, 4000)
-        mHandler.removeCallbacksAndMessages(null)
-
     }
+
+    private fun action() {
+        val intent = Intent(this, MainActivity::class.java).apply{
+        }
+        startActivity(intent)
+    }
+
 
 }
 

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Converte">
+    tools:context=".Convert">
 
     <com.google.android.gms.common.SignInButton
         android:id="@+id/sign_in_button"
@@ -16,16 +16,20 @@
 
     <TextView
         android:id="@+id/pesme"
-        android:layout_width="330dp"
-        android:layout_height="438dp"
+        android:layout_width="375dp"
+        android:layout_height="464dp"
+        android:alpha="0.99"
+        android:background="@drawable/pozadina1"
+        android:fontFamily="casual"
         android:text="TextView"
-        android:textSize="10sp"
+        android:textAlignment="center"
+        android:textSize="14sp"
+        android:textStyle="italic"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.493"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.331" />
+        app:layout_constraintVertical_bias="0.205" />
 
     <Button
         android:id="@+id/LogOut"
@@ -34,18 +38,19 @@
         android:text="@string/LogOut"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/pesme"
+        app:layout_constraintVertical_bias="0.162"
         tools:text="@string/LogOut" />
 
     <Button
         android:id="@+id/StartConvertion"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="84dp"
+        android:layout_marginTop="52dp"
         android:text="@string/convert"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.492"
         app:layout_constraintStart_toEndOf="@+id/LogOut"
         app:layout_constraintTop_toBottomOf="@+id/pesme" />
 </androidx.constraintlayout.widget.ConstraintLayout>

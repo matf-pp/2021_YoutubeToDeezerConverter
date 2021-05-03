@@ -2,14 +2,19 @@ package com.example.projekatppandroid
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import java.io.File
 
 const val GETTING_CODE = "com.example.myfirstapp.MESSAGE"
 var urlSent : String = ""
-val allInfo  = allImportantDeezerInfomation()
+val allInfo  = Configuration()
+
+//val fileName = "configuration"
+//val jsonString : String = File("configuration").readText()
 
 
 class GetDeezerInfo : AppCompatActivity()
@@ -18,12 +23,12 @@ class GetDeezerInfo : AppCompatActivity()
     {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_get_deezer_info)
-
+        //Log.d("JSon string: ", jsonString)
         // pravimo url koji pozivamo da bi dobili odgovarajući token
         var urlAuthenticantion = "https://connect.deezer.com/oauth/auth.php?"
-        urlAuthenticantion += "app_id=" + allInfo.getappID()
-        urlAuthenticantion += "&redirect_uri=" + allInfo.getredirect()
-        urlAuthenticantion += "&perms=" + allInfo.getperms()
+        urlAuthenticantion += "app_id=" + allInfo.getD_appID()
+        urlAuthenticantion += "&redirect_uri=" + allInfo.getD_redirect()
+        urlAuthenticantion += "&perms=" + allInfo.getD_perms()
         urlAuthenticantion += "&request_method=POST"
 
         val twLoading = findViewById<TextView>(R.id.textViewIspis)
@@ -51,6 +56,7 @@ class GetDeezerInfo : AppCompatActivity()
                     //textView.apply {
                     //    text = ""
                     //}
+                    finish()
                     getDeezerInfo()
                     //return false
                 }

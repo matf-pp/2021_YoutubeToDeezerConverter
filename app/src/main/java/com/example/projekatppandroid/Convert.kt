@@ -28,7 +28,7 @@ import java.net.URL
 import kotlin.system.exitProcess
 
 
-class Converte : AppCompatActivity() {
+class Convert : AppCompatActivity() {
 
     companion object {
         const val TAG = "GoogleActivity"
@@ -40,7 +40,7 @@ class Converte : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_converte)
+        setContentView(R.layout.activity_convert)
 
         var actionBar = supportActionBar
 
@@ -57,9 +57,9 @@ class Converte : AppCompatActivity() {
 
         val textView = findViewById<TextView>(R.id.pesme)
 
-        val clientID = getString(R.string.clientID)
-        val secret = getString(R.string.secret)
-        val ourID = getString(R.string.ourID)
+        val clientID = allInfo.getYt_clientID()
+        val secret = allInfo.getYt_secret()
+        val ourID = allInfo.getYt_ourID()
         val urlForAccessToken = "https://oauth2.googleapis.com/token"
 
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -93,7 +93,7 @@ class Converte : AppCompatActivity() {
 
         val StartConvertionButton = findViewById<Button>(R.id.StartConvertion)
         StartConvertionButton.setOnClickListener{
-            updateUIForConvertion()
+            updateUIForConvertionBegin()
             val user = GoogleSignIn.getLastSignedInAccount(this)
             val grant = "authorization_code"
             if (user != null) {
@@ -105,9 +105,14 @@ class Converte : AppCompatActivity() {
 
                 var accessTokenStringFormat = ourPostMethodList(l, urlForAccessToken)
                 if (!accessTokenStringFormat.contains("Success") || accessTokenStringFormat.contains("Failure") || accessTokenStringFormat.contains("Error")){
-                    // TODO loš je odgovor, mora da se obrati greska nekako
-                    Log.d("EXIT", "access_token")
-                    exitProcess(1)
+                    // TODO loš je odgovor, mora da se obradi greska nekako
+                    //Log.d("EXIT", "access_token")
+
+                    val intent = Intent(this, Error::class.java).apply{
+                        putExtra("Error", "Something went wrong, please try again!")
+                    }
+                    finish()
+                    startActivity(intent)
                 }
 
                 accessTokenStringFormat = accessTokenStringFormat.drop(accessTokenStringFormat.indexOf("{"))
@@ -131,6 +136,8 @@ class Converte : AppCompatActivity() {
 //                }
 
                 // todo : 401 error je ako korisnik nema yt kanal, jsuk
+
+
                 for (playlist in allPlaylists){
                     // za svaki playlist prvo napravis
                     val title = playlist.title
@@ -139,12 +146,28 @@ class Converte : AppCompatActivity() {
                     val bodyJson = """ { "snippet" : { "title" : "$title", "description" : "$description"}, "status" : { "privacyStatus" : "$status"}}"""
                     var youtubePlaylistInfoString = ourPostMethodBody(bodyJson, urlForInsertPlaylists)
                     if (!youtubePlaylistInfoString.contains("Success") || youtubePlaylistInfoString.contains("Failure") || youtubePlaylistInfoString.contains("Error")){
-                        // TODO: error neki
-                        //  moze se napravi neka funkcija tipa error specificno za ovaj poyiv,
-                        //  i ako se procita kao error 403, napise se korisniku e nemamo quote i tako te stvari
+
+                        if(youtubePlaylistInfoString.contains("401")){
+                            val intent = Intent(this, Error::class.java).apply{
+                                putExtra("Error", "You do not have youtube channel, please try again after you create one!")
+                            }
+                            startActivity(intent)
+                           // Log.d("ERROR","You do not have youtube channel, please try again after you create one.")
+                        }
+
+                        else{
+                            val intent = Intent(this, Error::class.java).apply{
+                                putExtra("Error", "Something went wrong, please try again!")
+                            }
+                            startActivity(intent)
+
+                        }
+
                         Log.d("ERROR", youtubePlaylistInfoString)
                         exitProcess(1)
                     }
+
+
                     youtubePlaylistInfoString = youtubePlaylistInfoString.drop(youtubePlaylistInfoString.indexOf("{"))
                     youtubePlaylistInfoString = youtubePlaylistInfoString.dropLast(youtubePlaylistInfoString.length - youtubePlaylistInfoString.lastIndexOf("]"))
 
@@ -186,24 +209,38 @@ class Converte : AppCompatActivity() {
                         if (!res.contains("Success") || res.contains("Failure") || res.contains("Error")){
                             Log.d("Error", res)
                             // TODO : nesto nije htela pesma se ubaci
+                            val intent = Intent(this, Error::class.java).apply{
+                                putExtra("Error", "It is not possible to insert a song in playlist!")
+                            }
+                            startActivity(intent)
                         }
                     }
+                    updateUIForConversionEnd()
                 }
             }
         }
     }
 
-    private fun updateUIForConvertion() {
+    private fun updateUIForConvertionBegin() {
         val textView = findViewById<TextView>(R.id.pesme)
         val signInButton = findViewById<SignInButton>(R.id.sign_in_button)
         val signOutButton = findViewById<Button>(R.id.LogOut)
         val StartConvertionButton = findViewById<Button>(R.id.StartConvertion)
+        val s = "Please wait while we make your playlists (This might take a while!)"
         textView.apply {
-            text = "Please wait while we make your playlists (This might take a while!)"
+            text = s
         }
         signOutButton.alpha = 0.0f
         StartConvertionButton.alpha = 0.0f
         signInButton.alpha = 0.0f
+    }
+
+    private fun updateUIForConversionEnd(){
+        val textView = findViewById<TextView>(R.id.pesme)
+        val s = "Thank you for using our app. Check your youTube account for you newly created playlists."
+        textView.apply {
+            text = s
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -235,6 +272,12 @@ class Converte : AppCompatActivity() {
         catch(e : MalformedURLException){
             // TODO: srediti
             Log.d("Error", e.stackTrace.toString())
+            val intent = Intent(this, Error::class.java).apply{
+                putExtra("Error", e.message)
+            }
+            startActivity(intent)
+            //exitProcess(1)
+
         }
 
         return videoId
@@ -299,6 +342,12 @@ class Converte : AppCompatActivity() {
             // Please refer to the GoogleSignInStatusCodes class reference for more information.
             //Log.w(FragmentActivity.TAG, "signInResult:failed code=" + e.statusCode)
             updateUI(null)
+            Log.d("error", e.stackTraceToString())
+            val intent = Intent(this, Error::class.java).apply{
+                putExtra("Error", e.message)
+            }
+            startActivity(intent)
+            //exitProcess(1)
         }
     }
 

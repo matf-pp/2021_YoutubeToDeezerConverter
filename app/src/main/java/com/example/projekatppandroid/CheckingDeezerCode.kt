@@ -103,8 +103,8 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
 
         } else {
             var urlAccessToken = "https://connect.deezer.com/oauth/access_token.php?"
-            urlAccessToken += "app_id=" + allInfo.getappID()
-            urlAccessToken += "&secret=" + allInfo.getsecret()
+            urlAccessToken += "app_id=" + allInfo.getD_appID()
+            urlAccessToken += "&secret=" + allInfo.getD_secret()
             urlAccessToken += "&code=" + returnval.resString
             urlAccessToken += "&request_method=POST"
             urlAccessToken += "&output=json"
@@ -126,16 +126,14 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
             res = ourGetRequest(urlForPlaylists)
             if (res.contains("wrong input")){
                 // TODO: salje na stranicu onu
+                val intent = Intent(this, Error::class.java).apply{
+                    putExtra("Error", "Something went wrong, please try again!")
+                }
+                startActivity(intent)
             }
             val allPlaylistsInfo : AllPlaylists = Json{ isLenient = true; ignoreUnknownKeys = true}.decodeFromString<AllPlaylists>(res)
 
             //TODO: šta ako ne izabere nijednu plajlistu? to se mora obraditi
-//            if(allPlaylistsInfo == null){
-//                val intent = Intent(this, Error::class.java).apply{
-//                    putExtra("Error", "Morate imati bar jednu plejlistu!")
-//                }
-//                startActivity(intent)
-//            }
 
             for (currentPlaylistInfo : PlaylistInfo in allPlaylistsInfo.data){
                 var playlistSize = currentPlaylistInfo.nb_tracks
@@ -187,11 +185,16 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
             //Ovo se odnosi na dugme CONVERT
             var btnConvert = findViewById<Button>(R.id.converteBtn)
             btnConvert.setOnClickListener{
-                val intent = Intent(this, Converte::class.java).apply{
-                    putExtra(GETTING_PLAYLISTS, Json.encodeToString(sentUserPlaylists))
-                    //(GETTING_PLAYLISTS, sentUserPlaylists.toTypedArray())
+                if(sentUserPlaylists.isNotEmpty()){
+                    val intent = Intent(this, Convert::class.java).apply{
+                        putExtra(GETTING_PLAYLISTS, Json.encodeToString(sentUserPlaylists))
+                        //(GETTING_PLAYLISTS, sentUserPlaylists.toTypedArray())
+                    }
+                    startActivity(intent)
                 }
-                startActivity(intent)
+                else{
+                    Toast.makeText(applicationContext, "You have to check al least one playlist", Toast.LENGTH_LONG).show()
+                }
             }
 
         }
@@ -209,7 +212,7 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
             }
         }
 
-        Toast.makeText(applicationContext, "Playlist name : $items", Toast.LENGTH_LONG).show()
+        //Toast.makeText(applicationContext, "Playlist name : $items", Toast.LENGTH_LONG).show()
 
     }
 
