@@ -1,3 +1,5 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/4f36ed5b8e2d4235b37eb88c3b992a77)](https://app.codacy.com/gh/matf-pp/2021_YoutubeToDeezerConverter?utm_source=github.com&utm_medium=referral&utm_content=matf-pp/2021_YoutubeToDeezerConverter&utm_campaign=Badge_Grade_Settings)
+
 #Naziv projekta: YoutubeToDeezerConverter
 
 ## Opis
@@ -11,4 +13,5 @@ Za kompilaciju je korišćeno razvojno okruženje AndroidStudio. Projekat korist
 
 ## Autori
 * Vukan Antic mi18225@alas.matf.bg.ac.rs
-* Katarina Dimitrijevic mi18027@alas.matf.bg.ac.r
+* Katarina Dimitrijevic mi18027@alas.matf.bg.ac.rs
+
