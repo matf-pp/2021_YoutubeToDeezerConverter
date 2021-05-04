@@ -1,3 +1,5 @@
+#Naziv projekta: YoutubeToDeezerConverter
+
 ## Opis
 Namena aplikacije : android mobilni uređaji.
 Aplikacija pristupa Deezer nalogu korisnika i cita njegove plejliste, nakon cega korisnik ima mogucnost da izabere one koje zeli da konvertuje u iste plejliste na njegovom youtube nalogu. Tema je inspirisana nedostatkom aplikacija slične namene na tržištu.

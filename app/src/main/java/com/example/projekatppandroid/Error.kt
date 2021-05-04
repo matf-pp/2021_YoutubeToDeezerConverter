@@ -20,7 +20,7 @@ class Error : AppCompatActivity() {
 
         var actionBar = supportActionBar
 
-        actionBar!!.title = ""
+        actionBar!!.title = "DeezerToYoutubeConverter"
         actionBar.setDisplayHomeAsUpEnabled(true)
 
         var intent = getIntent()
