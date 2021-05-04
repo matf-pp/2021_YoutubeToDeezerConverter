@@ -13,9 +13,6 @@ const val GETTING_CODE = "com.example.myfirstapp.MESSAGE"
 var urlSent : String = ""
 val allInfo  = Configuration()
 
-//val fileName = "configuration"
-//val jsonString : String = File("configuration").readText()
-
 
 class GetDeezerInfo : AppCompatActivity()
 {
@@ -44,9 +41,6 @@ class GetDeezerInfo : AppCompatActivity()
                 if (url != null) {
                     view?.loadUrl(url)
                 }
-                //textView.apply {
-                //    text = url
-                //}
 
                 // problem je što u nekom trenutku želimo da prestanemo sa webview i da napredujemo dalje
                 // sa aplikacijom, zato proveravam da li smo stigli do odredjenog ulr i ako jesmo, tu stajemo
@@ -70,106 +64,6 @@ class GetDeezerInfo : AppCompatActivity()
         // funkcija koja započinje zapravo webview
         webView.loadUrl(urlAuthenticantion)
 
-
-
-        //  mozda pomogne u buducnosti ne znam
-//        val uri: Uri = Uri.parse(url) // missing 'http://' will cause crashed
-//
-//        val intent = Intent(Intent.ACTION_VIEW, uri)
-//        startActivity(intent)
-
-        //val queue = Volley.newRequestQueue(this)
-
-// Request a string response from the provided URL.
-
-
-
- //Request a string response from the provided URL.
-//        val stringRequest = StringRequest(
-//            Request.Method.GET, newUrl,
-//              Response.Listener<String?> {
-//                fun onResponse(response: String) {
-//                    textView.apply {
-//                        text = "Response is: " + response.substring(0, 500)
-//                    }
-//                    // Display the first 500 characters of the response string.
-//                }
-//            }, object : Response.ErrorListener {
-//                override fun onErrorResponse(error: VolleyError?) {
-//                    textView.apply {
-//                        if (error != null) {
-//                            text = error.message.toString()
-//                        }
-//                        else {
-//                            text = "nije"
-//                        }
-//                    }
-//                }
-//            })
-//        queue.add(stringRequest)
-
-
-
-//        val getContent = registerForActivityResult(GetContent()) { uri: Uri? ->
-//            // Handle the returned Uri
-//        }
-
-        //startActivity(Intent(Intent.ACTION_MAIN, Uri.parse(url)))
-
-
-//        var res : String = "blabla"
-//        val webpage: Uri = Uri.parse(url)
-//        val intent = Intent(Intent.ACTION_VIEW, webpage)
-//        //res = sendBroadcast(intent).toString()
-//        if (intent.resolveActivity(packageManager) != null) {
-//            startActivity(intent).toString()
-//        }
-
-        //res = intent.dataString.toString()
-
-//        textView.apply {
-//            text = res
-//        }
-
-
-//        intent = Intent(Intent.ACTION_VIEW)
-//        intent.setData(Uri.parse(url))
-//        ////intent.data
-//        onActiv
-//        startActivity(intent)
-//
-//        textView.apply {
-//            text =
-//        }
-
-
-//        var trackId = 757807
-//        val uri = "http://www.deezer.com/track/$trackId"
-//        val intent = Intent(Intent.ACTION_VIEW)
-//        intent.setData(Uri.parse(uri))
-//        startActivity(intent)
-
-       // val thread = Thread {
-//            try {
-//                val myURL = URL(url)
-//                //val content = myURL.readText()
-//                val myConn: HttpURLConnection = myURL.openConnection() as HttpURLConnection
-//                myConn.setRequestMethod("GET")
-//
-//                System.out.println("Response Code: " + myConn.getResponseCode())
-//                val `in`: InputStream = BufferedInputStream(myConn.getInputStream())
-//                val response: String = org.apache.commons.io.IOUtils.toString(`in`, "UTF-8")
-//                //myConn.connect()
-//                textView.apply {
-//                    text = response
-//                }
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//            }
-//        }
-//
-//        thread.start()
-//        
     }
 
     // naš "skok" na sledeći deo apliakcije

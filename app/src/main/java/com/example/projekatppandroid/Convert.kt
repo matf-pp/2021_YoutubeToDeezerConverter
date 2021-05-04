@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.annotation.RequiresApi
@@ -50,8 +51,6 @@ class Convert : AppCompatActivity() {
         var intent = getIntent()
         val songs = intent.getStringExtra(GETTING_PLAYLISTS)
 
-        //var map : MutableMap<String, MutableList<String>> = mutableMapOf()
-        //map = Gson().fromJson(songs, map.javaClass)
 
         var allPlaylists = Json { isLenient = true }.decodeFromString<MutableList<PlaylistForYoutube>>(songs.toString())
 
@@ -94,130 +93,119 @@ class Convert : AppCompatActivity() {
         val StartConvertionButton = findViewById<Button>(R.id.StartConvertion)
         StartConvertionButton.setOnClickListener{
             updateUIForConvertionBegin()
-            val user = GoogleSignIn.getLastSignedInAccount(this)
-            val grant = "authorization_code"
-            if (user != null) {
-                val l = (listOf("client_id" to clientID,
-                        "code" to user.serverAuthCode,
-                        "client_secret" to secret,
-                        "redirect_uri" to "",
-                        "grant_type" to grant))
+            Thread(Runnable {
+                val user = GoogleSignIn.getLastSignedInAccount(this)
+                val grant = "authorization_code"
+                if (user != null) {
+                    val l = (listOf("client_id" to clientID,
+                            "code" to user.serverAuthCode,
+                            "client_secret" to secret,
+                            "redirect_uri" to "",
+                            "grant_type" to grant))
 
-                var accessTokenStringFormat = ourPostMethodList(l, urlForAccessToken)
-                if (!accessTokenStringFormat.contains("Success") || accessTokenStringFormat.contains("Failure") || accessTokenStringFormat.contains("Error")){
-                    // TODO loš je odgovor, mora da se obradi greska nekako
-                    //Log.d("EXIT", "access_token")
+                    var accessTokenStringFormat = ourPostMethodList(l, urlForAccessToken)
+                    if (!accessTokenStringFormat.contains("Success") || accessTokenStringFormat.contains("Failure") || accessTokenStringFormat.contains("Error")){
 
-                    val intent = Intent(this, Error::class.java).apply{
-                        putExtra("Error", "Something went wrong, please try again!")
+                        val intent = Intent(this, Error::class.java).apply{
+                            putExtra("Error", "Something went wrong, please try again!")
+                        }
+                        finish()
+                        startActivity(intent)
                     }
-                    finish()
-                    startActivity(intent)
+
+                    accessTokenStringFormat = accessTokenStringFormat.drop(accessTokenStringFormat.indexOf("{"))
+                    accessTokenStringFormat = accessTokenStringFormat.dropLast(accessTokenStringFormat.length - accessTokenStringFormat.lastIndexOf("]"))
+
+                    val accessTokenJsonFormat = Json{ isLenient = true; ignoreUnknownKeys = true }.decodeFromString<AccessTokenYoutube>(accessTokenStringFormat)
+
+                    var accessToken = accessTokenJsonFormat.access_token
+
+                    var urlForInsertPlaylists = "https://www.googleapis.com/youtube/v3/playlists?part=snippet,status"
+                    urlForInsertPlaylists += "&key=" + ourID
+                    urlForInsertPlaylists += "&access_token=" + accessToken
+
+
+                    for (playlist in allPlaylists){
+
+                        val title = playlist.title
+                        val description : String = playlist.makeRandomDescription()
+                        val status : String = if (playlist.status) "public" else "private"
+                        val bodyJson = """ { "snippet" : { "title" : "$title", "description" : "$description"}, "status" : { "privacyStatus" : "$status"}}"""
+                        var youtubePlaylistInfoString = ourPostMethodBody(bodyJson, urlForInsertPlaylists)
+                        if (!youtubePlaylistInfoString.contains("Success") || youtubePlaylistInfoString.contains("Failure") || youtubePlaylistInfoString.contains("Error")){
+
+                            if(youtubePlaylistInfoString.contains("401")){
+                                val intent = Intent(this, Error::class.java).apply{
+                                    putExtra("Error", "You do not have youtube channel, please try again after you create one!")
+                                }
+                                startActivity(intent)
+
+                            }
+
+                            else{
+                                val intent = Intent(this, Error::class.java).apply{
+                                    putExtra("Error", "Something went wrong, please try again later (no more quotas)!")
+                                }
+                                startActivity(intent)
+
+                            }
+
+                            Log.d("ERROR", youtubePlaylistInfoString)
+                            exitProcess(1)
+                        }
+
+
+                        youtubePlaylistInfoString = youtubePlaylistInfoString.drop(youtubePlaylistInfoString.indexOf("{"))
+                        youtubePlaylistInfoString = youtubePlaylistInfoString.dropLast(youtubePlaylistInfoString.length - youtubePlaylistInfoString.lastIndexOf("]"))
+
+                        val youtubePlaylistInfoJson = Json{ isLenient = true; ignoreUnknownKeys = true }.decodeFromString<YoutubePlaylistCreationInfo>(youtubePlaylistInfoString)
+                        val playlistID = youtubePlaylistInfoJson.id
+                        Log.d("playlistid", playlistID)
+                        val n = playlist.allSongs.size
+                        val groupSize = 3
+
+                        val songIds = Array<String>(n, init = { "" })
+
+                        var i = 0
+                        while (i < n){
+                            val threadCount = min(groupSize, n - i)
+                            val threads = Array<Thread>(threadCount, init = {
+                                Thread(Runnable {
+                                    val song = playlist.allSongs[i + it]
+                                    val songTitle = song.artist.name + " - " + song.title
+                                    songIds[i + it] = getSongID(songTitle)
+                                })
+                            } )
+                            threads.forEach {it.start()}
+                            threads.forEach {it.join()}
+                            i += threadCount
+                        }
+
+
+                        var urlForSongInsertion = "https://www.googleapis.com/youtube/v3/playlistItems?"
+                        urlForSongInsertion += "part=snippet"
+                        urlForSongInsertion += "&key=" + ourID
+                        urlForSongInsertion += "&access_token=" + accessToken
+
+                        for (songid in songIds){
+                            if (songid == "")
+                                continue
+                            val body =  """ { "snippet" : { "playlistId" : "$playlistID", "resourceId" : { "kind" : "youtube#video", "videoId" : "$songid"}}}"""
+                            val res = ourPostMethodBody(body, urlForSongInsertion)
+                            if (!res.contains("Success") || res.contains("Failure") || res.contains("Error")){
+                                Log.d("Error", res)
+
+                                val intent = Intent(this, Error::class.java).apply{
+                                    putExtra("Error", "It is not possible to insert a song in playlist!")
+                                }
+                                startActivity(intent)
+                            }
+                        }
+                        updateUIForConversionEnd()
+                    }
                 }
+            }).start()
 
-                accessTokenStringFormat = accessTokenStringFormat.drop(accessTokenStringFormat.indexOf("{"))
-                accessTokenStringFormat = accessTokenStringFormat.dropLast(accessTokenStringFormat.length - accessTokenStringFormat.lastIndexOf("]"))
-
-                //Log.d("bla", accessTokenStringFormat)
-
-
-                // TODO: tipa if accessTokenStringFormat.contanintsss("error") onda error screen
-                // TODO: isto tako za ono wrong sranje kod deezer (to je ono kad se vraćaš pa error)
-                val accessTokenJsonFormat = Json{ isLenient = true; ignoreUnknownKeys = true }.decodeFromString<AccessTokenYoutube>(accessTokenStringFormat)
-
-                var accessToken = accessTokenJsonFormat.access_token
-                //Log.d("ACCESSTOKEN!", accessToken)
-                var urlForInsertPlaylists = "https://www.googleapis.com/youtube/v3/playlists?part=snippet,status"
-                urlForInsertPlaylists += "&key=" + ourID
-                urlForInsertPlaylists += "&access_token=" + accessToken
-                //Log.d("My app",accessToken + "\n---------------------------------------------------\n" + user.idToken)
-//                findViewById<TextView>(R.id.pesme).apply {
-//                    text = accessToken + "\n---------------------------------------------------\n" + user.idToken
-//                }
-
-                // todo : 401 error je ako korisnik nema yt kanal, jsuk
-
-
-                for (playlist in allPlaylists){
-                    // za svaki playlist prvo napravis
-                    val title = playlist.title
-                    val description : String = playlist.makeRandomDescription()
-                    val status : String = if (playlist.status) "public" else "private"
-                    val bodyJson = """ { "snippet" : { "title" : "$title", "description" : "$description"}, "status" : { "privacyStatus" : "$status"}}"""
-                    var youtubePlaylistInfoString = ourPostMethodBody(bodyJson, urlForInsertPlaylists)
-                    if (!youtubePlaylistInfoString.contains("Success") || youtubePlaylistInfoString.contains("Failure") || youtubePlaylistInfoString.contains("Error")){
-
-                        if(youtubePlaylistInfoString.contains("401")){
-                            val intent = Intent(this, Error::class.java).apply{
-                                putExtra("Error", "You do not have youtube channel, please try again after you create one!")
-                            }
-                            startActivity(intent)
-                           // Log.d("ERROR","You do not have youtube channel, please try again after you create one.")
-                        }
-
-                        else{
-                            val intent = Intent(this, Error::class.java).apply{
-                                putExtra("Error", "Something went wrong, please try again!")
-                            }
-                            startActivity(intent)
-
-                        }
-
-                        Log.d("ERROR", youtubePlaylistInfoString)
-                        exitProcess(1)
-                    }
-
-
-                    youtubePlaylistInfoString = youtubePlaylistInfoString.drop(youtubePlaylistInfoString.indexOf("{"))
-                    youtubePlaylistInfoString = youtubePlaylistInfoString.dropLast(youtubePlaylistInfoString.length - youtubePlaylistInfoString.lastIndexOf("]"))
-
-                    val youtubePlaylistInfoJson = Json{ isLenient = true; ignoreUnknownKeys = true }.decodeFromString<YoutubePlaylistCreationInfo>(youtubePlaylistInfoString)
-                    val playlistID = youtubePlaylistInfoJson.id
-                    Log.d("playlistid", playlistID)
-                    val n = playlist.allSongs.size
-                    val groupSize = 3
-                    // TODO : konkruentnost za array
-                    val songIds = Array<String>(n, init = { "" })
-                    // Thread pool mozda?
-                    var i = 0
-                    while (i < n){
-                        val threadCount = min(groupSize, n - i)
-                        val threads = Array<Thread>(threadCount, init = {
-                            Thread(Runnable {
-                                val song = playlist.allSongs[i + it]
-                                val songTitle = song.artist.name + " - " + song.title
-                                songIds[i + it] = getSongID(songTitle)
-                            })
-                        } )
-                        threads.forEach {it.start()}
-                        threads.forEach {it.join()}
-                        i += threadCount
-                    }
-
-                    //Log.d("SongIds", songIds.contentToString())
-
-                    var urlForSongInsertion = "https://www.googleapis.com/youtube/v3/playlistItems?"
-                    urlForSongInsertion += "part=snippet"
-                    urlForSongInsertion += "&key=" + ourID
-                    urlForSongInsertion += "&access_token=" + accessToken
-
-                    for (songid in songIds){
-                        if (songid == "")
-                            continue
-                        val body =  """ { "snippet" : { "playlistId" : "$playlistID", "resourceId" : { "kind" : "youtube#video", "videoId" : "$songid"}}}"""
-                        val res = ourPostMethodBody(body, urlForSongInsertion)
-                        if (!res.contains("Success") || res.contains("Failure") || res.contains("Error")){
-                            Log.d("Error", res)
-                            // TODO : nesto nije htela pesma se ubaci
-                            val intent = Intent(this, Error::class.java).apply{
-                                putExtra("Error", "It is not possible to insert a song in playlist!")
-                            }
-                            startActivity(intent)
-                        }
-                    }
-                    updateUIForConversionEnd()
-                }
-            }
         }
     }
 
@@ -230,27 +218,24 @@ class Convert : AppCompatActivity() {
         textView.apply {
             text = s
         }
-        signOutButton.alpha = 0.0f
-        StartConvertionButton.alpha = 0.0f
-        signInButton.alpha = 0.0f
+        signOutButton.visibility = View.INVISIBLE
+        StartConvertionButton.visibility = View.INVISIBLE
+        signInButton.visibility = View.INVISIBLE
     }
 
     private fun updateUIForConversionEnd(){
         val textView = findViewById<TextView>(R.id.pesme)
         val s = "Thank you for using our app. Check your youTube account for you newly created playlists."
-        textView.apply {
-            text = s
-        }
+
+        textView.text = s
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
     private fun getSongID(songTitle: String) : String {
-        //Log.d("Song title", songTitle)
+
         var encoded = java.net.URLEncoder.encode(songTitle, "utf-8")
         var urlStr = "https://www.youtube.com/results?search_query=" + encoded
-        //urltoSong = "https://www.youtube.com/results?search_query=Lana+Del+Rey+-+Art+Deco"
-        //Log.d("encoded", encoded)
-        //Log.d("Song url", urlStr)
+
         var videoId : String = ""
 
         try{
@@ -270,7 +255,7 @@ class Convert : AppCompatActivity() {
             //Log.d("videoID", videoId)
         }
         catch(e : MalformedURLException){
-            // TODO: srediti
+
             Log.d("Error", e.stackTrace.toString())
             val intent = Intent(this, Error::class.java).apply{
                 putExtra("Error", e.message)
@@ -298,33 +283,33 @@ class Convert : AppCompatActivity() {
 
 
     private fun updateUI(user: GoogleSignInAccount?) {
+        val textView = findViewById<TextView>(R.id.pesme)
         if (user != null){
-            findViewById<TextView>(R.id.pesme).apply {
+            textView.apply {
                 var s : String = "Welcome back " + user.displayName + " ! \n"
                 s  += "Would you like to continue with this account?"
                 text = s
                 //ourPostMethod(user)
             }
-            findViewById<SignInButton>(R.id.sign_in_button).alpha = 0.0f
-            findViewById<Button>(R.id.LogOut).alpha = 1.0f
-            findViewById<Button>(R.id.StartConvertion).alpha = 1.0f
+            findViewById<SignInButton>(R.id.sign_in_button).visibility = View.INVISIBLE
+            findViewById<Button>(R.id.LogOut).visibility = View.VISIBLE
+            findViewById<Button>(R.id.StartConvertion).visibility = View.VISIBLE
         }
         else {
-            findViewById<TextView>(R.id.pesme).apply {
+            textView.apply {
                 var s : String = "Please login to one of your Google accounts."
                 text = s
                 //ourPostMethod(user)
             }
-            findViewById<SignInButton>(R.id.sign_in_button).alpha = 1.0f
-            findViewById<Button>(R.id.LogOut).alpha = 0.0f
-            findViewById<Button>(R.id.StartConvertion).alpha = 0.0f
+            findViewById<SignInButton>(R.id.sign_in_button).visibility = View.VISIBLE
+            findViewById<Button>(R.id.LogOut).visibility = View.INVISIBLE
+            findViewById<Button>(R.id.StartConvertion).visibility = View.INVISIBLE
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
         if (requestCode == RC_SIGN_IN) {
 
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
@@ -352,7 +337,7 @@ class Convert : AppCompatActivity() {
     }
 
     private fun ourPostMethodBody(s: String, url: String): String {
-        // s je body
+
         var res = ""
         val thread = Thread {
             val (x, y, result) = Fuel.post(url)

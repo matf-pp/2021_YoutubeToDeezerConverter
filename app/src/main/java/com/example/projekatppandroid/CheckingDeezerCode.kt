@@ -42,12 +42,9 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
                 //System.out.println("Response Code: " + myConn.getResponseCode())
                 val `in`: InputStream = BufferedInputStream(myConn.getInputStream())
                 response = org.apache.commons.io.IOUtils.toString(`in`, "UTF-8")
-//            val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
-//                text = response
-//            }
+
             }
             catch (e : Exception){
-                // TODO: neka vesta greške! (something went wrong, please try again)
                 val intent = Intent(this, Error::class.java).apply{
                     putExtra("Error", e.localizedMessage)
                 }
@@ -91,11 +88,7 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
         val returnval = checkURL(urlGiven.toString())
         //val mapa : MutableMap<String, MutableList<String>> = mutableMapOf()
         if (returnval.success == -1){
-            // TODO: vrati nazad ili tako nesto (ili prekini ceo program)
-//            val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
-//                text =  returnval.resString
-//            }
-            //exitProcess(-1)
+
             val intent = Intent(this, Error::class.java).apply{
                 putExtra("Error", returnval.resString)
             }
@@ -119,13 +112,11 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
 
             var urlForPlaylists = "https://api.deezer.com/user/me/playlists?"
             urlForPlaylists += "access_token=" + acc_token
-            // TODO : moze wrong input mora to se popravi
-            // ako je ubacen post metod on misli da dodajemo pesme, zato ne radi
-            //urlForPlaylists += "&request_method=POST"
+
             urlForPlaylists += "&output=json"
             res = ourGetRequest(urlForPlaylists)
             if (res.contains("wrong input")){
-                // TODO: salje na stranicu onu
+
                 val intent = Intent(this, Error::class.java).apply{
                     putExtra("Error", "Something went wrong, please try again!")
                 }
@@ -133,7 +124,6 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
             }
             val allPlaylistsInfo : AllPlaylists = Json{ isLenient = true; ignoreUnknownKeys = true}.decodeFromString<AllPlaylists>(res)
 
-            //TODO: šta ako ne izabere nijednu plajlistu? to se mora obraditi
 
             for (currentPlaylistInfo : PlaylistInfo in allPlaylistsInfo.data){
                 var playlistSize = currentPlaylistInfo.nb_tracks
@@ -160,12 +150,8 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
                 latestPlaylist.makeRandomDescription()
                 allUserPlaylists.add(latestPlaylist)
 
-                //mapa[currentPlaylistName] = l
             }
 
-//            val textView = findViewById<TextView>(R.id.editTextTextPersonName).apply {
-//                text = mapa.keys.toString()
-//            }
 
             var names : MutableList<String> = mutableListOf()
 
@@ -211,8 +197,6 @@ class CheckingDeezerCode : AppCompatActivity(), AdapterView.OnItemClickListener 
                 sentUserPlaylists.add(pl)
             }
         }
-
-        //Toast.makeText(applicationContext, "Playlist name : $items", Toast.LENGTH_LONG).show()
 
     }
 
